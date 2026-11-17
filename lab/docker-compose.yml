@@ -1,0 +1,37 @@
+name: loom1103ciadopt
+
+services:
+  loom:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:18810:8000"
+    environment:
+      AWS_EC2_METADATA_DISABLED: "true"
+      AWS_DEFAULT_REGION: "us-east-1"
+      AWS_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: "lab"
+      AWS_SECRET_ACCESS_KEY: "lab"
+      LOOM_LITELLM_PRICING_URL: ""
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      LOG_LEVEL: "info"
+    volumes:
+      - ./lab_patch.py:/usr/local/lib/python3.13/site-packages/lab_patch.py:ro
+      - ./sitecustomize.py:/usr/local/lib/python3.13/site-packages/sitecustomize.py:ro
+      - ./poc.py:/lab/poc.py:ro
+    labels:
+      - "LOOM-1103-CI-ADOPT"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else 1)",
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
